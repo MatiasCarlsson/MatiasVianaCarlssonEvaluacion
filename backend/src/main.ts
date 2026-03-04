@@ -11,7 +11,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.FRONTEND_URL ?? '*',
+    credentials: true,
+  });
 
   // 1. Global Exception Filter
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -37,7 +40,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(3000);
+  await app.listen(process.env.PORT ? parseInt(process.env.PORT) : 3000);
 }
 
 bootstrap();
