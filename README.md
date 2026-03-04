@@ -58,7 +58,15 @@ chmod +x start.sh
 ./start.sh
 ```
 
-El script instala dependencias, genera el cliente Prisma, sincroniza el schema y arranca ambos servidores. Si `backend/.env` no existe, lo crea desde `.env.example` y pide confirmar las credenciales antes de continuar.
+El script hace todo automáticamente:
+
+- Verifica Node.js ≥ 20
+- Si los puertos 3000 o 5173 están ocupados, pregunta si querés liberarlos
+- Si `backend/.env` no existe, lo crea desde `.env.example` y pide confirmar las credenciales
+- Instala dependencias, genera el cliente Prisma y sincroniza el schema
+- Arranca ambos servidores (Ctrl+C detiene los dos)
+
+> **Nota sobre las credenciales**: normalmente las credenciales no se incluyen en un repositorio, pero dado que este es un repo privado de evaluación y la base de datos está en Supabase (un servicio externo que el evaluador no puede replicar localmente), se optó por incluirlas en `.env.example` para que la app funcione sin configuración adicional.
 
 ---
 
