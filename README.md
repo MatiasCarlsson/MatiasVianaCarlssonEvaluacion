@@ -66,8 +66,6 @@ El script hace todo automáticamente:
 - Instala dependencias, genera el cliente Prisma y sincroniza el schema
 - Arranca ambos servidores (Ctrl+C detiene los dos)
 
-> **Nota sobre las credenciales**: normalmente las credenciales no se incluyen en un repositorio, pero dado que este es un repo privado de evaluación y la base de datos está en Supabase (un servicio externo que el evaluador no puede replicar localmente), se optó por incluirlas en `.env.example` para que la app funcione sin configuración adicional.
-
 ---
 
 ### Opción B — Manual
