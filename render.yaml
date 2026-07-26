@@ -10,8 +10,8 @@ services:
     region: oregon # cambia a la región más cercana
     plan: free
     rootDir: backend
-    buildCommand: npm install --include=dev && npm run build
-    startCommand: npm run start:prod
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run start:prod
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
