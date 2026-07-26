@@ -1,10 +1,21 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { PrismaModule } from './prisma/prisma.module';
 import { NotesModule } from './notes/notes.module';
 import { CategoriesModule } from './categories/categories.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
-  imports: [PrismaModule, NotesModule, CategoriesModule, HealthModule],
+  imports: [
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 300000, // 5 minutos de cache
+      max: 500,
+    }),
+    PrismaModule,
+    NotesModule,
+    CategoriesModule,
+    HealthModule,
+  ],
 })
 export class AppModule {}

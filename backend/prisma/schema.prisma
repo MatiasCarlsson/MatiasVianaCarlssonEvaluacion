@@ -33,4 +33,6 @@ model notes {
   updatedAt       DateTime          @default(now()) @updatedAt
   id              String            @id @default(uuid())
   note_categories note_categories[]
+
+  @@index([isArchived, createdAt(sort: Desc)])
 }
