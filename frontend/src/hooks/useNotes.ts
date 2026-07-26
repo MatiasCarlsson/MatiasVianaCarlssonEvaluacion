@@ -13,11 +13,56 @@ type Filter = "active" | "archived" | string; // string = categoryId
 const DEFAULT_LIMIT = 20;
 
 export const useNotes = (filter: Filter = "active") => {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [meta, setMeta] = useState<PageMeta | null>(null);
+  const cacheKeyNotes = `notes_cache_${filter}`;
+  const cacheKeyMeta = `meta_cache_${filter}`;
+
+  const [notes, setNotes] = useState<Note[]>(() => {
+    try {
+      const cached = localStorage.getItem(cacheKeyNotes);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [meta, setMeta] = useState<PageMeta | null>(() => {
+    try {
+      const cached = localStorage.getItem(cacheKeyMeta);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Cargar desde cache al cambiar el filtro
+  useEffect(() => {
+    try {
+      const cachedNotes = localStorage.getItem(cacheKeyNotes);
+      const cachedMeta = localStorage.getItem(cacheKeyMeta);
+      setNotes(cachedNotes ? JSON.parse(cachedNotes) : []);
+      setMeta(cachedMeta ? JSON.parse(cachedMeta) : null);
+    } catch {
+      setNotes([]);
+      setMeta(null);
+    }
+  }, [filter, cacheKeyNotes, cacheKeyMeta]);
+
+  // Sincronizar cache al cambiar notas o meta
+  useEffect(() => {
+    if (notes.length > 0 || localStorage.getItem(cacheKeyNotes)) {
+      localStorage.setItem(cacheKeyNotes, JSON.stringify(notes));
+    }
+  }, [notes, cacheKeyNotes]);
+
+  useEffect(() => {
+    if (meta) {
+      localStorage.setItem(cacheKeyMeta, JSON.stringify(meta));
+    } else {
+      localStorage.removeItem(cacheKeyMeta);
+    }
+  }, [meta, cacheKeyMeta]);
 
   // Ref para acceder al estado más reciente en callbacks asíncronos (rollback)
   const notesRef = useRef(notes);

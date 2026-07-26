@@ -28,7 +28,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, isActive, onSelec
         e.stopPropagation();
         onDelete(category.id);
       }}
-      className="opacity-0 group-hover:opacity-100 cursor-pointer p-1.5 md:opacity-0 md:group-hover:opacity-100 text-(--text-secondary) hover:text-[#ef4444] hover:rotate-180 duration-500 transition-all rounded-full ml-1 shrink-0 text-sm leading-none"
+      className="cursor-pointer p-1.5 text-(--text-secondary) hover:text-[#ef4444] hover:rotate-180 duration-500 transition-all rounded-full ml-1 shrink-0 text-sm leading-none"
       title="Eliminar categoría"
     >
       ✕

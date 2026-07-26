@@ -7,12 +7,25 @@ import type {
 import { categoriesApi } from "../api/categories.api";
 
 export const useCategories = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(() => {
+    try {
+      const cached = localStorage.getItem("categories_cache");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (categories.length > 0 || localStorage.getItem("categories_cache")) {
+      localStorage.setItem("categories_cache", JSON.stringify(categories));
+    }
+  }, [categories]);
+
   const fetchCategories = useCallback(async () => {
-    setLoading(true);
+    if (categories.length === 0) setLoading(true);
     setError(null);
     try {
       const data = await categoriesApi.getAll();
@@ -22,7 +35,7 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [categories.length]);
 
   useEffect(() => {
     fetchCategories();

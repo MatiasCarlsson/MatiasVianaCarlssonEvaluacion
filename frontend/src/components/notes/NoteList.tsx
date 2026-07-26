@@ -28,8 +28,8 @@ export const NoteList: React.FC<NoteListProps> = ({
   onLoadMore,
   onNewNote,
 }) => {
-  // Estado de carga: mostrar skeletons en lugar de spinner
-  if (loading) {
+  // Estado de carga: mostrar skeletons en lugar de spinner (solo si no hay notas en cache)
+  if (loading && notes.length === 0) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-8">
         {Array.from({ length: 6 }).map((_, i) => (
