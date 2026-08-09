@@ -51,12 +51,9 @@ export class NotesController {
     description: 'Búsqueda en título/contenido',
   })
   @Get()
-  async findAllActive(
-    @Query() options: PageOptionsDto,
-    @Query('categoryId') categoryId?: string,
-  ) {
-    if (categoryId)
-      return await this.notesService.findByCategory(categoryId, options);
+  async findAllActive(@Query() options: PageOptionsDto) {
+    if (options.categoryId)
+      return await this.notesService.findByCategory(options.categoryId, options);
     return await this.notesService.findAllActive(options);
   }
 

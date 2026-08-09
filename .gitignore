@@ -36,6 +36,10 @@ yarn-error.log*
 prisma/dev.db
 prisma/dev.db-journal
 
+# Persistencia JSON local (se crea automáticamente en runtime)
+backend/data/
+backend/data.json
+
 # Test coverage
 coverage/
 *.lcov

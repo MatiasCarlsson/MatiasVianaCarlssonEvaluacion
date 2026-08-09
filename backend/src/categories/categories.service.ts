@@ -4,7 +4,7 @@ import { Cache } from 'cache-manager';
 import { CategoriesRepository } from './categories.repository';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { categories } from '@prisma/client';
+import { JsonCategory } from '../json-file/types';
 import {
   PageOptionsDto,
   PaginatedResult,
@@ -31,13 +31,14 @@ export class CategoriesService {
 
   async findAllCategories(
     options: PageOptionsDto,
-  ): Promise<PaginatedResult<categories>> {
+  ): Promise<PaginatedResult<JsonCategory>> {
     const page = options.page ?? 1;
     const limit = options.limit ?? 20;
     const q = options.q ?? '';
     const cacheKey = `categories:all:${page}:${limit}:${q}`;
 
-    const cached = await this.cacheManager.get<PaginatedResult<categories>>(cacheKey);
+    const cached =
+      await this.cacheManager.get<PaginatedResult<JsonCategory>>(cacheKey);
     if (cached) return cached;
 
     const { data, total } = await this.categoriesRepository.findAll(options);
@@ -52,7 +53,7 @@ export class CategoriesService {
 
   async findOne(id: string) {
     const cacheKey = `categories:id:${id}`;
-    const cached = await this.cacheManager.get<categories>(cacheKey);
+    const cached = await this.cacheManager.get<JsonCategory>(cacheKey);
     if (cached) return cached;
 
     const category = await this.categoriesRepository.findById(id);
@@ -65,7 +66,7 @@ export class CategoriesService {
 
   async findByNote(noteId: string) {
     const cacheKey = `categories:note:${noteId}`;
-    const cached = await this.cacheManager.get<categories[]>(cacheKey);
+    const cached = await this.cacheManager.get<JsonCategory[]>(cacheKey);
     if (cached) return cached;
 
     const result = await this.categoriesRepository.findByNote(noteId);
@@ -74,18 +75,24 @@ export class CategoriesService {
   }
 
   async addCategoryToNote(noteId: string, categoryId: string) {
-    const result = await this.categoriesRepository.addCategoryToNote(noteId, categoryId);
+    const result = await this.categoriesRepository.addCategoryToNote(
+      noteId,
+      categoryId,
+    );
     await this.invalidateCache();
     return result;
   }
 
   async removeCategoryFromNote(noteId: string, categoryId: string) {
-    const result = await this.categoriesRepository.removeCategoryFromNote(noteId, categoryId);
+    const result = await this.categoriesRepository.removeCategoryFromNote(
+      noteId,
+      categoryId,
+    );
     await this.invalidateCache();
     return result;
   }
 
-  async create(data: CreateCategoryDto): Promise<categories> {
+  async create(data: CreateCategoryDto): Promise<JsonCategory> {
     const result = await this.categoriesRepository.create({
       name: data.name,
       ...(data.color !== undefined && { color: data.color }),

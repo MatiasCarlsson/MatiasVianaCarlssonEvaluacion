@@ -1,13 +1,18 @@
-import { Controller, Get } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { Controller, Get } from '@nestjs/common';
+import { JsonFileService } from '../json-file/json-file.service';
 
-@Controller("health")
+@Controller('health')
 export class HealthController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly jsonFileService: JsonFileService) {}
 
   @Get()
   async check() {
-    const result = await this.prisma.$queryRaw<{ ok: number }[]>`SELECT 1 as ok`;
-    return { status: "ok", db: result[0]?.ok === 1 ? "up" : "down" };
+    const db = await this.jsonFileService.read();
+    return {
+      status: 'ok',
+      storage: 'json-file',
+      notes: db.notes.length,
+      categories: db.categories.length,
+    };
   }
 }

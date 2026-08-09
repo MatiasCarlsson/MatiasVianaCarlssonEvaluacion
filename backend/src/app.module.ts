@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { PrismaModule } from './prisma/prisma.module';
+import { JsonFileModule } from './json-file/json-file.module';
 import { NotesModule } from './notes/notes.module';
 import { CategoriesModule } from './categories/categories.module';
 import { HealthModule } from './health/health.module';
@@ -12,7 +12,7 @@ import { HealthModule } from './health/health.module';
       ttl: 300000, // 5 minutos de cache
       max: 500,
     }),
-    PrismaModule,
+    JsonFileModule,
     NotesModule,
     CategoriesModule,
     HealthModule,

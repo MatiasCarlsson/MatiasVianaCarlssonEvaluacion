@@ -8,7 +8,7 @@ import {
   PageOptionsDto,
   PaginatedResult,
 } from '../common/dto/page-options.dto';
-import { notes } from '@prisma/client';
+import { NoteWithCategories } from '../json-file/types';
 
 @Injectable()
 export class NotesService {
@@ -31,13 +31,16 @@ export class NotesService {
 
   async findAllActive(
     options: PageOptionsDto,
-  ): Promise<PaginatedResult<notes>> {
+  ): Promise<PaginatedResult<NoteWithCategories>> {
     const page = options.page ?? 1;
     const limit = options.limit ?? 20;
     const q = options.q ?? '';
     const cacheKey = `notes:active:${page}:${limit}:${q}`;
 
-    const cached = await this.cacheManager.get<PaginatedResult<notes>>(cacheKey);
+    const cached =
+      await this.cacheManager.get<PaginatedResult<NoteWithCategories>>(
+        cacheKey,
+      );
     if (cached) return cached;
 
     const { data, total } = await this.notesRepository.findAll(false, options);
@@ -52,13 +55,16 @@ export class NotesService {
 
   async findAllArchived(
     options: PageOptionsDto,
-  ): Promise<PaginatedResult<notes>> {
+  ): Promise<PaginatedResult<NoteWithCategories>> {
     const page = options.page ?? 1;
     const limit = options.limit ?? 20;
     const q = options.q ?? '';
     const cacheKey = `notes:archived:${page}:${limit}:${q}`;
 
-    const cached = await this.cacheManager.get<PaginatedResult<notes>>(cacheKey);
+    const cached =
+      await this.cacheManager.get<PaginatedResult<NoteWithCategories>>(
+        cacheKey,
+      );
     if (cached) return cached;
 
     const { data, total } = await this.notesRepository.findAll(true, options);
@@ -73,7 +79,7 @@ export class NotesService {
 
   async findOne(id: string) {
     const cacheKey = `notes:id:${id}`;
-    const cached = await this.cacheManager.get<notes>(cacheKey);
+    const cached = await this.cacheManager.get<NoteWithCategories>(cacheKey);
     if (cached) return cached;
 
     const note = await this.notesRepository.findById(id);
@@ -86,13 +92,16 @@ export class NotesService {
   async findByCategory(
     categoryId: string,
     options: PageOptionsDto,
-  ): Promise<PaginatedResult<notes>> {
+  ): Promise<PaginatedResult<NoteWithCategories>> {
     const page = options.page ?? 1;
     const limit = options.limit ?? 20;
     const q = options.q ?? '';
     const cacheKey = `notes:cat:${categoryId}:${page}:${limit}:${q}`;
 
-    const cached = await this.cacheManager.get<PaginatedResult<notes>>(cacheKey);
+    const cached =
+      await this.cacheManager.get<PaginatedResult<NoteWithCategories>>(
+        cacheKey,
+      );
     if (cached) return cached;
 
     const { data, total } = await this.notesRepository.findByCategory(
@@ -131,7 +140,10 @@ export class NotesService {
 
   async setArchiveStatus(id: string, isArchived: boolean) {
     await this.findOne(id);
-    const result = await this.notesRepository.updateArchiveStatus(id, isArchived);
+    const result = await this.notesRepository.updateArchiveStatus(
+      id,
+      isArchived,
+    );
     await this.invalidateCache();
     return result;
   }

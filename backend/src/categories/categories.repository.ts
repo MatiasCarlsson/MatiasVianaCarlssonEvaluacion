@@ -1,76 +1,104 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, categories } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import { JsonFileService } from '../json-file/json-file.service';
+import { JsonCategory } from '../json-file/types';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { PageOptionsDto } from '../common/dto/page-options.dto';
 
 @Injectable()
 export class CategoriesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly jsonFileService: JsonFileService) {}
 
   async findAll(options: PageOptionsDto) {
+    const db = await this.jsonFileService.read();
     const page = options.page ?? 1;
     const limit = options.limit ?? 20;
-    const where: Prisma.categoriesWhereInput = options.q
-      ? { name: { contains: options.q.trim() } }
-      : {};
+    const q = options.q?.trim().toLowerCase() ?? '';
 
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.categories.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.categories.count({ where }),
-    ]);
+    let filtered = db.categories;
+    if (q) {
+      filtered = filtered.filter((c) => c.name.toLowerCase().includes(q));
+    }
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+    const total = filtered.length;
+    const data = filtered.slice((page - 1) * limit, page * limit);
 
     return { data, total };
   }
 
-  async findById(id: string): Promise<categories | null> {
-    return await this.prisma.categories.findUnique({ where: { id } });
+  async findById(id: string): Promise<JsonCategory | null> {
+    const db = await this.jsonFileService.read();
+    return db.categories.find((c) => c.id === id) ?? null;
   }
 
-  async findByNote(noteId: string): Promise<categories[]> {
-    const relations = await this.prisma.note_categories.findMany({
-      where: { noteId },
-      include: { categories: true },
-    });
-    return relations
-      .map((r) => r.categories)
-      .filter((c): c is categories => c !== null);
+  async findByNote(noteId: string): Promise<JsonCategory[]> {
+    const db = await this.jsonFileService.read();
+    const categoryIds = new Set(
+      db.note_categories
+        .filter((nc) => nc.noteId === noteId)
+        .map((nc) => nc.categoryId),
+    );
+    return db.categories.filter((c) => categoryIds.has(c.id));
   }
 
-  async addCategoryToNote(noteId: string, categoryId: string) {
-    try {
-      return await this.prisma.note_categories.create({
-        data: { noteId, categoryId },
-      });
-    } catch (e: any) {
-      if (e.code === 'P2002') return { noteId, categoryId }; // Ya existe
-      throw e;
-    }
-  }
-
-  async removeCategoryFromNote(noteId: string, categoryId: string) {
-    return await this.prisma.note_categories.delete({
-      where: { noteId_categoryId: { noteId, categoryId } },
+  addCategoryToNote(noteId: string, categoryId: string) {
+    return this.jsonFileService.mutate((db) => {
+      const exists = db.note_categories.some(
+        (nc) => nc.noteId === noteId && nc.categoryId === categoryId,
+      );
+      if (!exists) {
+        db.note_categories.push({ noteId, categoryId });
+      }
+      return { noteId, categoryId };
     });
   }
 
-  async create(data: { name: string; color?: string }): Promise<categories> {
-    return await this.prisma.categories.create({ data });
+  removeCategoryFromNote(noteId: string, categoryId: string) {
+    return this.jsonFileService.mutate((db) => {
+      db.note_categories = db.note_categories.filter(
+        (nc) => !(nc.noteId === noteId && nc.categoryId === categoryId),
+      );
+      return { noteId, categoryId };
+    });
   }
 
-  async update(id: string, data: UpdateCategoryDto): Promise<categories> {
-    return await this.prisma.categories.update({ where: { id }, data });
+  create(data: { name: string; color?: string }): Promise<JsonCategory> {
+    return this.jsonFileService.mutate((db) => {
+      const category: JsonCategory = {
+        id: randomUUID(),
+        name: data.name,
+        color: data.color ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      db.categories.push(category);
+      return category;
+    });
   }
 
-  async delete(id: string): Promise<categories> {
-    const exists = await this.findById(id);
-    if (!exists)
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    return await this.prisma.categories.delete({ where: { id } });
+  update(id: string, data: UpdateCategoryDto): Promise<JsonCategory> {
+    return this.jsonFileService.mutate((db) => {
+      const category = db.categories.find((c) => c.id === id);
+      if (!category) {
+        throw new NotFoundException(`Category with ID ${id} not found`);
+      }
+      if (data.name !== undefined) category.name = data.name;
+      if (data.color !== undefined) category.color = data.color;
+      return category;
+    });
+  }
+
+  delete(id: string): Promise<JsonCategory> {
+    return this.jsonFileService.mutate((db) => {
+      const index = db.categories.findIndex((c) => c.id === id);
+      if (index === -1) {
+        throw new NotFoundException(`Category with ID ${id} not found`);
+      }
+      const [deleted] = db.categories.splice(index, 1);
+      db.note_categories = db.note_categories.filter(
+        (nc) => nc.categoryId !== id,
+      );
+      return deleted;
+    });
   }
 }

@@ -73,12 +73,8 @@ info "Instalando dependencias del backend..."
 cd "$BACKEND_DIR"
 npm install --silent
 
-# ─── 5. Generar cliente Prisma y sincronizar schema 
-info "Generando cliente Prisma..."
-npx prisma generate
-
-info "Sincronizando schema con la base de datos..."
-npx prisma db push || error "Falló prisma db push. Verificá que la base de datos esté corriendo y las credenciales en backend/.env sean correctas."
+# 5. Preparar persistencia JSON local 
+info "Persistencia JSON local en backend/data/data.json (se crea automáticamente)"
 
 # 6. Instalar dependencias del frontend 
 info "Instalando dependencias del frontend..."
