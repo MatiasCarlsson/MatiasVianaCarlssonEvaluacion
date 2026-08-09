@@ -33,6 +33,14 @@ export class PageOptionsDto {
   @IsString()
   @IsOptional()
   q?: string;
+
+  @ApiPropertyOptional({
+    description: 'UUID de la categoría para filtrar',
+  })
+  @Type(() => String)
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
 }
 
 export interface PaginatedMeta {
