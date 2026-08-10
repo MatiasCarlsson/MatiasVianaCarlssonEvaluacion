@@ -1,0 +1,19 @@
+name: Keep services awake
+
+on:
+  schedule:
+    # Keep Render backend warm (every 10 minutes)
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  # Render backend keep-alive (every 10 min)
+  render-keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend healthcheck
+        run: |
+          curl -fsS --max-time 30 \
+            "https://notizen-4bfu.onrender.com/api/health" \
+            -H "Accept: application/json" \
+            -w "\nHTTP %{http_code} in %{time_total}s\n"

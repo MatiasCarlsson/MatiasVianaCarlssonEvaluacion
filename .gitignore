@@ -51,5 +51,10 @@ coverage/
 # Agent skills / tooling config (local, not project source)
 .agents/
 .claude/
-.github/
 skills-lock.json
+
+# GitHub Actions: solo se versiona el workflow de keep-alive
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/deploy.yml
