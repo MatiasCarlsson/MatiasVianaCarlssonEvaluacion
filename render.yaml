@@ -18,14 +18,12 @@ services:
         value: production
       - key: PORT
         value: 3000
-      # Postgres externo (Supabase). Completá las URIs en el dashboard de Render.
-      # DATABASE_URL: pooler transaction-mode (6543, ?pgbouncer=true) para queries en runtime.
-      # DIRECT_URL: conexión directa (5432) para `prisma db push`/migraciones.
-      # A ambas agregales &sslmode=require (Supabase exige SSL).
-      - key: DATABASE_URL
-        sync: false # pegá aquí la connection string transaction-pooler de Supabase
-      - key: DIRECT_URL
-        sync: false # pegá aquí la connection string directa (session) de Supabase
+      # Persistencia JSON local. El filesystem de Render es efímero:
+      # los datos se pierden en cada redeploy/reinicio del servicio.
+      # En el plan free no hay discos persistentes; si necesitás persistir,
+      # montá un "Persistent Disk" y apuntá JSON_DB_PATH a esa ruta (p. ej. /var/data/data.json).
+      - key: JSON_DB_PATH
+        value: ./data/data.json
       # URL del frontend para CORS (ajustá al dominio real de Render)
       - key: FRONTEND_URL
         sync: false # completá con la URL de notizen-frontend

@@ -117,38 +117,25 @@ La app queda disponible en `http://localhost:5173`.
 
 | Variable       | Descripción                                                            | Ejemplo                                                                                         |
 | -------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `DATABASE_URL` | Cadena de conexión **transaction pooler** de Supabase (puerto 6543)    | `postgresql://postgres.xxx:PASS@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require` |
-| `DIRECT_URL`   | Cadena de conexión **directa/session** de Supabase (puerto 5432)       | `postgresql://postgres.xxx:PASS@aws-0-region.pooler.supabase.com:5432/postgres?sslmode=require` |
+| `JSON_DB_PATH` | Ruta del archivo JSON local (se crea automáticamente si no existe)    | `./data/data.json`                                                                              |
 | `FRONTEND_URL` | URL del frontend para CORS (coma-separada si son varias)               | `http://localhost:5173,https://tudominio.com`                                                   |
 | `PORT`         | Puerto del servidor (default 3000)                                     | `3000`                                                                                          |
 
-> **Importante — SSL:** Supabase exige SSL. Ambas URLs **deben terminar en `&sslmode=require`** (o `?sslmode=require` si no hay query params). El pooler ya trae `?pgbouncer=true`, agregale `&sslmode=require`.
+> **Importante — Persistencia:** los datos se guardan en `backend/data/data.json`. En Render el filesystem es **efímero**: los datos se pierden en cada redeploy o reinicio. Para persistirlos necesitás un **Persistent Disk** de Render (plan de pago) y apuntar `JSON_DB_PATH` a esa ruta (ej. `/var/data/data.json`).
 
 ## Despliegue en Render (Blueprint)
 
 El repositorio incluye `render.yaml` para despliegue automático como **Blueprint**:
 
 1. En Render: **New → Blueprint** → conectá el repo `MatiasCarlsson/Notizen`.
-2. Render crea tres recursos:
-   - **PostgreSQL** (no se usa si usás Supabase, pero el blueprint lo define)
-   - **Web Service: notizen-backend** — build + start, `DATABASE_URL` y `DIRECT_URL` como `sync: false` (las completás en el dashboard).
+2. Render crea dos recursos:
+   - **Web Service: notizen-backend** — build `pnpm install --frozen-lockfile && pnpm run build`, start `node dist/main`, healthcheck en `/api/health`. No necesita base de datos.
    - **Static Site: notizen-frontend** — build estático, SPA fallback a `index.html`.
-3. En el backend, completá las variables de entorno:
-   - `DATABASE_URL` = pooler transaction-mode de Supabase + `&sslmode=require`
-   - `DIRECT_URL` = directa/session de Supabase + `?sslmode=require`
-   - `FRONTEND_URL` = URL del frontend en Render (ej. `https://notizen-frontend.onrender.com`)
+3. En el backend, si hace falta completá `FRONTEND_URL` = URL del frontend en Render (ej. `https://notizen-frontend.onrender.com`).
 4. En el frontend, completá `VITE_API_URL` = URL del backend + `/api` (ej. `https://notizen-backend.onrender.com/api`).
 5. Deploy.
 
-> **Nota:** El free tier de Render hace cold-start tras 15 min de inactividad (la primera request tarda ~30-60s). El free tier de Supabase pausa el proyecto tras 7 días sin actividad. Para evitar la pausa de Supabase, el repo incluye un workflow `.github/workflows/keep-alive.yml` que corre `SELECT 1` semanalmente (requiere agregar secret `SUPABASE_DIRECT_URL` en Settings → Secrets del repo).
-
-## Keep-alive Supabase (GitHub Actions)
-
-`.github/workflows/keep-alive.yml` ejecuta una consulta trivial semanalmente para que Supabase no pause la DB. Para que funcione:
-
-1. En GitHub: **Settings → Secrets and variables → Actions → New repository secret**.
-2. Nombre: `SUPABASE_DIRECT_URL` — Valor: tu `DIRECT_URL` de Supabase (con `?sslmode=require`).
-3. El workflow corre los lunes a las 04:17 UTC y también se puede lanzar manualmente (*Run workflow*).
+> **Nota:** El free tier de Render hace cold-start tras 15 min de inactividad (la primera request tarda ~30-60s).
 
 ## Arquitectura del backend
 
