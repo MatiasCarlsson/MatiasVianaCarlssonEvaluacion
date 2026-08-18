@@ -24,8 +24,7 @@ Aplicación web para gestionar notas con soporte de categorías y filtros. Arqui
 | HTTP client   | Axios                     | 1.13         |
 | Enrutado      | React Router              | 7            |
 | Backend       | NestJS + TypeScript       | 11 / 5.7     |
-| ORM           | Prisma                    | 6            |
-| Base de datos | PostgreSQL (Supabase)     | 16           |
+| Persistencia  | Archivo JSON local        | —            |
 | Runtime       | Node.js                   | ≥ 20.x       |
 
 ## Estructura del repositorio
@@ -34,7 +33,7 @@ Aplicación web para gestionar notas con soporte de categorías y filtros. Arqui
 /
 ├── backend/   # API REST (NestJS) — puerto 3000
 ├── frontend/  # SPA (React + Vite) — puerto 5173
-└── .github/   # Workflows (keep-alive para Supabase free tier)
+└── .github/   # Workflow keep-alive (evita cold starts en Render free tier)
 ```
 
 ## Autenticación
@@ -46,8 +45,7 @@ Aplicación web para gestionar notas con soporte de categorías y filtros. Arqui
 ### Prerrequisitos
 
 - Node.js ≥ 20.x con npm ≥ 10.x
-- Cuenta en [Supabase](https://supabase.com) (proyecto PostgreSQL free)
-- La base de datos es **PostgreSQL en Supabase** — no hay SQLite local.
+- No se necesita base de datos: las notas se guardan en `backend/data/data.json`
 - La API del backend debe ser accesible desde el frontend. En desarrollo: `http://localhost:3000/api`. Para producción, configurar `VITE_API_URL` en `frontend/.env.local`.
 
 ### Opción A — Script automático (Linux / macOS / Git Bash en Windows)
@@ -64,9 +62,8 @@ El script hace todo automáticamente:
 
 - Verifica Node.js ≥ 20
 - Si los puertos 3000 o 5173 están ocupados, pregunta si querés liberarlos
-- Si `backend/.env` no existe, lo crea desde `.env.example` y pide confirmar credenciales
-- Instala dependencias, genera el cliente Prisma y sincroniza el schema
-- Arranca ambos servidores (Ctrl+C detiene los dos)
+- Si `backend/.env` no existe, lo crea desde `.env.example`
+- Instala dependencias y arranca ambos servidores (Ctrl+C detiene los dos)
 
 ### Opción B — Manual
 
@@ -80,11 +77,6 @@ npm install
 
 # Configurar variables de entorno
 cp .env.example .env
-# Editar .env con tus credenciales de Supabase (ver sección Variables de entorno)
-
-# Generar cliente Prisma y sincronizar schema
-npx prisma generate
-npx prisma db push
 
 # Iniciar en modo desarrollo
 npm run start:dev
@@ -94,7 +86,7 @@ La API queda disponible en `http://localhost:3000`.
 Swagger UI en `http://localhost:3000/api/docs`.  
 Healthcheck en `http://localhost:3000/api/health`.
 
-> Nota: para borrar todos los datos y empezar limpio, en Supabase ejecutá `TRUNCATE notes, categories, note_categories RESTART IDENTITY CASCADE;` o recreá el proyecto.
+> Nota: para borrar todos los datos y empezar limpio, eliminá `backend/data/data.json` y reiniciá el backend.
 
 #### 2. Frontend
 
@@ -142,12 +134,12 @@ El repositorio incluye `render.yaml` para despliegue automático como **Blueprin
 El backend sigue una separación estricta en capas:
 
 ```md
-Controller → Service → Repository → Prisma (PostgreSQL)
+Controller → Service → Repository → JSON file (data/data.json)
 ```
 
 - **Controllers** — reciben las request HTTP y delegan al servicio
 - **Services** — contienen la lógica de negocio
-- **Repositories** — encapsulan el acceso a la base de datos vía Prisma
+- **Repositories** — encapsulan el acceso a la persistencia JSON
 - **DTOs** — validan y tipan los datos de entrada con `class-validator`
 
 ## Endpoints principales
@@ -166,4 +158,4 @@ Controller → Service → Repository → Prisma (PostgreSQL)
 | DELETE | `/api/notes/:id/categories/:catId` | Quitar categoría de nota              |
 
 La documentación completa está disponible en Swagger (`/api/docs`).  
-Healthcheck: `GET /api/health` → `{ "status": "ok", "db": "up" }`.
+Healthcheck: `GET /api/health` → `{ "status": "ok", "storage": "json-file" }`.

@@ -3,7 +3,7 @@
 # Deploy: connect this repo in Render and select "render.yaml" (Blueprint).
 
 services:
-  # ─── Backend (NestJS + Postgres externo, ej. Supabase) ────────────
+  # ─── Backend (NestJS + persistencia JSON local) ────────────────
   - type: web
     name: notizen-backend
     runtime: node
